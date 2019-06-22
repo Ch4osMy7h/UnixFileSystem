@@ -1,3 +1,4 @@
-./idea
-./cmake_build_debug
-./DS_Store
+.idea
+cmake-build-debug
+.vscode
+.DS_Store
