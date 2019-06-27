@@ -3,11 +3,11 @@
 #include <cstdio>
 #include "image.h"
 #include "filesystem.h"
+#include "editor.h"
 
 using namespace std;
 
 int main() {
-
     Image image;
     bool isFormat = false;
     image.InitImage(isFormat);

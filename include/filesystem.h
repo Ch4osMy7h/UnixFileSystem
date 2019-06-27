@@ -9,6 +9,7 @@
 #include "inode.h"
 #include "superblock.h"
 #include "dir.h"
+#include "editor.h"
 
 
 class FileSystem {
@@ -70,6 +71,7 @@ private:
 
     void Cat(int inode_addr, char name[]);
 
+    void editor(int cur_dir_addr, char file_name[], char buf[]);
 
     void Help();
 };
