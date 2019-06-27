@@ -34,10 +34,11 @@ private:
     char cur_grop_name[MAX_NAME_SIZE];          //当前用户组名
     char cur_dir_name[MAX_NAME_SIZE];           //当前目录名
     char cur_user_dir_name[MAX_NAME_SIZE];      //当前登陆用户目录名
-    //是否登陆
+
+
     bool check(char name[], char wd[]);
     void FindDir(int inode_addr, const char name[]);
-    int INodeAlloc(); //分配inode节点，返回inode地址
+    int INodeAlloc();
     int BlockAlloc();
 
     bool Create(int father_inode_addr, const char name[], char file_content[]);

@@ -17,9 +17,7 @@ public:
     Image();
 
     bool InitImage(bool& isFormat);
-    bool ImageExists();
-    bool CreateImage();
-    bool LoadImage();
+
 
 
     const string &get_filename() const {

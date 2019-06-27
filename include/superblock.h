@@ -26,7 +26,6 @@ struct SuperBlock
     unsigned short s_SUPERBLOCK_SIZE;		//超级块大小
     unsigned short s_blocks_per_group;		//每 blockgroup 的block数量
 
-    //磁盘分布
     int s_Superblock_StartAddr;
     int s_InodeBitmap_StartAddr;
     int s_BlockBitmap_StartAddr;

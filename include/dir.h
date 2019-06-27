@@ -9,10 +9,10 @@
 
 
 
-//目录项 size = 32 byte one block can store 512/32  16个目录项
+//目录项 size = 32 byte one block can store 512/32 = 16个目录项
 struct Dir {
-    char name[MAX_NAME_SIZE]; //目录项或者文件名
-    int inode_addr; //
+    char name[MAX_NAME_SIZE];
+    int inode_addr;
 };
 
 

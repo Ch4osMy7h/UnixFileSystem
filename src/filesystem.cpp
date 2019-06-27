@@ -27,25 +27,23 @@ bool FileSystem::Format() {
     superBlock->s_free_INODE_NUM = INODE_NUM;
     superBlock->s_free_BLOCK_NUM = BLOCK_NUM;
     superBlock->s_blocks_per_group = BLOCKS_PER_GROUP;
-    superBlock->s_free_addr = Block_StartAddr;	//空闲块堆栈指针为第一块block
-    superBlock->s_Superblock_StartAddr = Superblock_StartAddr;
-    superBlock->s_BlockBitmap_StartAddr = BlockBitmap_StartAddr;
-    superBlock->s_InodeBitmap_StartAddr = InodeBitmap_StartAddr;
-    superBlock->s_Block_StartAddr = Block_StartAddr;
-    superBlock->s_Inode_StartAddr = Inode_StartAddr;
-    //空闲块堆栈在后面赋值
+    superBlock->s_free_addr = BLOCK_STARTADDR;
+    superBlock->s_Superblock_StartAddr = SUPERBLOCK_START_ADDR;
+    superBlock->s_BlockBitmap_StartAddr = BLOCKBIITMAP_START_ADDR;
+    superBlock->s_InodeBitmap_StartAddr = INODEBITMAP_START_ADDR;
+    superBlock->s_Block_StartAddr = BLOCK_STARTADDR;
+    superBlock->s_Inode_StartAddr = INODE_START_ADDR;
 
 
     FILE* fr = image.get_file_read();
     FILE* fw = image.get_file_write();
-    //初始化inode位图
+
     memset(inode_bitmap,0,sizeof(inode_bitmap));
-    fseek(image.get_file_write(), InodeBitmap_StartAddr, SEEK_SET);
+    fseek(image.get_file_write(), INODEBITMAP_START_ADDR, SEEK_SET);
     fwrite(inode_bitmap,sizeof(inode_bitmap),1, fw);
 
-    //初始化block位图
     memset(block_bitmap,0,sizeof(block_bitmap));
-    fseek(fw,BlockBitmap_StartAddr,SEEK_SET);
+    fseek(fw,BLOCKBIITMAP_START_ADDR,SEEK_SET);
     fwrite(block_bitmap,sizeof(block_bitmap),1, fw);
 
     //初始化磁盘块区，根据成组链接法组织
@@ -54,25 +52,25 @@ bool FileSystem::Format() {
             //最后一组 下面一组没有空闲盘块
             superBlock->s_free[0] = -1;
         else
-            superBlock->s_free[0] = Block_StartAddr + (i+1)*BLOCKS_PER_GROUP*BLOCK_SIZE;	//指向下一个空闲块
+            superBlock->s_free[0] = BLOCK_STARTADDR + (i+1)*BLOCKS_PER_GROUP*BLOCK_SIZE;	//指向下一个空闲块
         for(int j=1; j<BLOCKS_PER_GROUP; j++){
-            superBlock->s_free[j] = Block_StartAddr + (i*BLOCKS_PER_GROUP + j)*BLOCK_SIZE;
+            superBlock->s_free[j] = BLOCK_STARTADDR + (i*BLOCKS_PER_GROUP + j)*BLOCK_SIZE;
         }
-        fseek(fw,Block_StartAddr+i*BLOCKS_PER_GROUP*BLOCK_SIZE,SEEK_SET);
+        fseek(fw,BLOCK_STARTADDR+i*BLOCKS_PER_GROUP*BLOCK_SIZE,SEEK_SET);
         fwrite(superBlock->s_free,sizeof(superBlock->s_free),1,fw);	//填满这个磁盘块，512字节
     }
     //超级块写入到虚拟磁盘文件
-    fseek(fw,Superblock_StartAddr,SEEK_SET);
+    fseek(fw, SUPERBLOCK_START_ADDR,SEEK_SET);
     fwrite(superBlock, sizeof(SuperBlock),1,fw);
 
     fflush(fw);
 
     //读取inode位图
-    fseek(fr,InodeBitmap_StartAddr,SEEK_SET);
+    fseek(fr,INODEBITMAP_START_ADDR,SEEK_SET);
     fread(inode_bitmap,sizeof(inode_bitmap),1,fr);
 
     //读取block位图
-    fseek(fr,BlockBitmap_StartAddr,SEEK_SET);
+    fseek(fr,BLOCKBIITMAP_START_ADDR,SEEK_SET);
     fread(block_bitmap,sizeof(block_bitmap),1,fr);
 
     fflush(fr);
@@ -150,15 +148,15 @@ bool FileSystem::InitFileSystem() {
     //读取superblock
     FILE* fr = image.get_file_read();
     if(fr == NULL) return false;
-    fseek(fr, Superblock_StartAddr, SEEK_SET);
+    fseek(fr, SUPERBLOCK_START_ADDR, SEEK_SET);
     fread(this->superBlock, sizeof(SuperBlock), 1, fr);
 
     //读取inode位图
-    fseek(fr, InodeBitmap_StartAddr, SEEK_SET);
+    fseek(fr, INODEBITMAP_START_ADDR, SEEK_SET);
     fread(this->inode_bitmap, sizeof(inode_bitmap), 1, fr);
 
     //读取block位图
-    fseek(fr,BlockBitmap_StartAddr,SEEK_SET);
+    fseek(fr,BLOCKBIITMAP_START_ADDR,SEEK_SET);
     fread(block_bitmap,sizeof(block_bitmap),1,fr);
     return true;
 }
@@ -475,7 +473,7 @@ bool FileSystem::MakeDir(int inode_addr, char *name) {
 
         //设置新的inode
         iNode p;
-        p.inode_id = static_cast<unsigned short>((cur_inode_addr - Inode_StartAddr) / superBlock->s_INODE_SIZE);
+        p.inode_id = static_cast<unsigned short>((cur_inode_addr - INODE_START_ADDR) / superBlock->s_INODE_SIZE);
         strcpy(p.user_name, cur_user_name);
         strcpy(p.user_group, cur_grop_name);
         p.inode_cnt = 2;	//两个项，当前目录, "."和".."
@@ -540,14 +538,14 @@ int FileSystem::INodeAlloc() {
         }
         FILE* fw = image.get_file_write();
         superBlock->s_free_INODE_NUM--;
-        fseek(fw, Superblock_StartAddr, SEEK_SET);
+        fseek(fw, SUPERBLOCK_START_ADDR, SEEK_SET);
         fwrite(superBlock, sizeof(superBlock), 1, fw);
         inode_bitmap[pos] = 1;
-        fseek(fw, InodeBitmap_StartAddr + pos, SEEK_SET);
+        fseek(fw, INODEBITMAP_START_ADDR + pos, SEEK_SET);
         fwrite(&inode_bitmap[pos], sizeof(bool), 1, fw);
         fflush(fw);
 
-        return Inode_StartAddr + pos * superBlock->s_INODE_SIZE;
+        return INODE_START_ADDR + pos * superBlock->s_INODE_SIZE;
 
 
     }
@@ -588,14 +586,14 @@ int FileSystem::BlockAlloc() {
     }
     FILE* fw = image.get_file_write();
     //更新超级块
-    fseek(fw, Superblock_StartAddr, SEEK_SET);
+    fseek(fw, SUPERBLOCK_START_ADDR, SEEK_SET);
     fwrite(superBlock, sizeof(SuperBlock), 1, fw);
     fflush(fw);
 
     //更新block位图
-    block_bitmap[(alloc_addr-Block_StartAddr)/BLOCK_SIZE] = 1;
-    fseek(fw, (alloc_addr-Block_StartAddr)/BLOCK_SIZE+BlockBitmap_StartAddr, SEEK_SET);	//(retAddr-Block_StartAddr)/BLOCK_SIZE为第几个空闲块
-    fwrite(&block_bitmap[(alloc_addr-Block_StartAddr)/BLOCK_SIZE], sizeof(bool), 1, fw);
+    block_bitmap[(alloc_addr-BLOCK_STARTADDR)/BLOCK_SIZE] = 1;
+    fseek(fw, (alloc_addr-BLOCK_STARTADDR)/BLOCK_SIZE+BLOCKBIITMAP_START_ADDR, SEEK_SET);
+    fwrite(&block_bitmap[(alloc_addr-BLOCK_STARTADDR)/BLOCK_SIZE], sizeof(bool), 1, fw);
     fflush(fw);
 
     return alloc_addr;
@@ -619,10 +617,8 @@ bool FileSystem::Create(int father_inode_addr, const char *name, char *file_cont
     int i = 0;
     int find_pos_i = -1, find_pos_j = -1;
     int dir_block_num;
-    int cnt = cur.inode_cnt + 1; //目录项数
     while(i < 160){
-        //160个目录项之内，可以直接在直接块里找
-        dir_block_num = i/16;	//在第几个直接块里
+        dir_block_num = i/16;
 
         if(cur.inode_dirblock[dir_block_num]==-1){
             i += 16;
@@ -664,7 +660,7 @@ bool FileSystem::Create(int father_inode_addr, const char *name, char *file_cont
         //创建这个目录项
         strcpy(dir_vec[find_pos_j].name, name);
         int cur_inode_addr = INodeAlloc();
-        if(cur_inode_addr==-1){
+        if(cur_inode_addr == -1){
             cout << "INode 分配失败" << endl;
             return false;
         }
@@ -672,7 +668,7 @@ bool FileSystem::Create(int father_inode_addr, const char *name, char *file_cont
 
         //设置新条目的inode
         iNode p;
-        p.inode_id = static_cast<unsigned short>((cur_inode_addr - Inode_StartAddr) / superBlock->s_INODE_SIZE);
+        p.inode_id = static_cast<unsigned short>((cur_inode_addr - INODE_START_ADDR) / superBlock->s_INODE_SIZE);
         strcpy(p.user_name, cur_user_name);
         strcpy(p.user_group, cur_grop_name);
         p.inode_cnt = 1;	//只有一个文件指向
@@ -681,16 +677,14 @@ bool FileSystem::Create(int father_inode_addr, const char *name, char *file_cont
         int k;
 
         //将buf内容存到磁盘块
-        int len = static_cast<int>(strlen(file_content));	//文件长度，单位为字节
-        for(int k=0; k<len; k += superBlock->s_BLOCK_SIZE){	//最多10次，10个磁盘快，即最多5K
-            //分配这个inode的磁盘块，从控制台读取内容
+        int len = static_cast<int>(strlen(file_content));
+        for(int k = 0; k < len; k += superBlock->s_BLOCK_SIZE){
             int cur_block_Addr = BlockAlloc();
             if(cur_block_Addr == -1){
                 cout << "Block分配失败" << endl;
                 return false;
             }
             p.inode_dirblock[k/superBlock->s_BLOCK_SIZE] = cur_block_Addr;
-            //写入到当前目录的磁盘块
             fseek(fw, cur_block_Addr,SEEK_SET);
             fwrite(file_content+k, superBlock->s_BLOCK_SIZE, 1, fw);
         }
@@ -739,15 +733,12 @@ bool FileSystem::Create(int father_inode_addr, const char *name, char *file_cont
 }
 
 void FileSystem::Chmod(int father_inode_addr, const char *name, int mode) {
-    if(strlen(name) >= MAX_NAME_SIZE) {
-        cout << "超过最大目录长度" << endl;
+
+    if(strcmp(name,".")==0 || strcmp(name,"..")==0){
+        cout << "usage: chmod [filename] [permissions] : Change the file permissions" << endl;
         return ;
     }
 
-    if(strcmp(name,".")==0 || strcmp(name,"..")==0){
-        cout << "无法对上级目录和当前目录进行权限更改" << endl;
-        return ;
-    }
     FILE* fr = image.get_file_read();
     FILE* fw = image.get_file_write();
     iNode cur, res;
@@ -758,7 +749,7 @@ void FileSystem::Chmod(int father_inode_addr, const char *name, int mode) {
     bool flag = false;
     while(i < 160) {
         if(cur.inode_dirblock[i/16] == -1){
-            i+=16;
+            i += 16;
             continue;
         }
         //取出磁盘块
@@ -787,14 +778,13 @@ void FileSystem::Chmod(int father_inode_addr, const char *name, int mode) {
     }
 
     if(strcmp(cur_user_name, res.user_name) != 0 && strcmp(cur_user_name, "root")!=0){
-        cout << "该文件不属于你，无法进行权限更改" << endl;
+        cout << "" << endl;
         return ;
     }
 
-    //对inode的mode属性进行修改
-    res.inode_mode  = static_cast<unsigned short>((res.inode_mode >> 9 << 9) | mode);	//修改权限
 
-    //将inode写回磁盘
+    res.inode_mode  = static_cast<unsigned short>((res.inode_mode >> 9 << 9) | mode);
+
     fseek(fw, dir_vec[j].inode_addr,SEEK_SET);
     fwrite(&res, sizeof(iNode), 1, fw);
     fflush(fw);
@@ -905,7 +895,7 @@ void FileSystem::ReadCommand(char *command) {
     }
     else if(strcmp(param_first, "format")==0){
         if(strcmp(cur_user_name, "root") != 0){
-            cout << "格式化该系统需要root权限" << endl;
+            cout << "Permission Dennied" << endl;
             return ;
         }
         Format();
@@ -980,8 +970,6 @@ void FileSystem::ShowDir(int addr) {
                 cout << "-";
             }
 
-   /*         tm *ptr;	//存储时间
-            ptr=gmtime(&tmp.i_mtime);*/
 
             int permiss_index = 8;
             while(permiss_index >= 0){
@@ -997,13 +985,12 @@ void FileSystem::ShowDir(int addr) {
             }
             printf("\t");
 
-            //其它
             printf("%d\t", helper.inode_cnt);	//该文件链接
             printf("%s\t",helper.user_name);	//文件所属用户名
             printf("%s\t",helper.user_group);	//文件所属用户名
-            printf("%d B\t", helper.inode_size);	//文件大小
+            printf("%5d B\t", helper.inode_size);	//文件大小
             printf("%s", dir_vec[j].name);	//文件名
-            printf("\n");
+            cout << endl;
             i++;
         }
 
@@ -1039,8 +1026,7 @@ bool FileSystem::DeleteDir(int addr, char *params) {
         filemode = 0;
 
     if( (((cur.inode_mode >> filemode >> 1) & 1 ) ==0 ) && (strcmp(cur_user_name, "root")!=0) ){
-        //没有写入权限
-        cout << "无当前权限" << endl;
+        cout << "Permission Dennied" << endl;
         return false;
     }
 
@@ -1148,11 +1134,11 @@ void FileSystem::DeleteFileOrDir(int addr) {
 }
 
 bool FileSystem::FreeBlock(int addr) {
-    if( (addr - Block_StartAddr) % superBlock->s_BLOCK_SIZE != 0 ){
+    if( (addr - BLOCK_STARTADDR) % superBlock->s_BLOCK_SIZE != 0 ){
         cout << "不是磁盘块所处正确位置" << endl;
         return false;
     }
-    unsigned int block_id = static_cast<unsigned int>((addr - Block_StartAddr) / superBlock->s_BLOCK_SIZE);	//inode节点号
+    unsigned int block_id = static_cast<unsigned int>((addr - BLOCK_STARTADDR) / superBlock->s_BLOCK_SIZE);	//inode节点号
     //该地址还未使用，不能释放空间
     if(block_bitmap[block_id]==0){
         printf("该block（磁盘块）还未使用，无法释放\n");
@@ -1190,26 +1176,26 @@ bool FileSystem::FreeBlock(int addr) {
 
 
     superBlock->s_free_BLOCK_NUM++;	//空闲块数+1
-    fseek(image.get_file_write(),Superblock_StartAddr,SEEK_SET);
+    fseek(image.get_file_write(),SUPERBLOCK_START_ADDR,SEEK_SET);
     fwrite(superBlock, sizeof(SuperBlock),1, image.get_file_write());
 
     //更新block位图
     block_bitmap[block_id] = 0;
-    fseek(image.get_file_write(), block_id + BlockBitmap_StartAddr, SEEK_SET);
+    fseek(image.get_file_write(), block_id + BLOCKBIITMAP_START_ADDR, SEEK_SET);
     fwrite(&block_bitmap[block_id], sizeof(bool), 1, image.get_file_write());
     fflush(image.get_file_write());
     return true;
 }
 
 bool FileSystem::INodeFree(int addr) {
-    int t = Inode_StartAddr;
+    int t = INODE_START_ADDR;
     if( ( addr - t) % superBlock->s_INODE_SIZE != 0 ){
         cout << "不是正确的inode节点位置" << endl;
         return false;
     }
     int inode_id = (addr - t)/ superBlock->s_INODE_SIZE;	//inode节点号
-    if(inode_bitmap[inode_id]==0){
-        printf("该inode还未使用，无法释放\n");
+    if(inode_bitmap[inode_id] == 0){
+        cout << "未使用该inode，无法释放" << endl;
         return false;
     }
 
@@ -1221,12 +1207,12 @@ bool FileSystem::INodeFree(int addr) {
     //更新超级块
     superBlock->s_free_INODE_NUM++;
     //空闲inode数+1
-    fseek(image.get_file_write(), Superblock_StartAddr, SEEK_SET);
+    fseek(image.get_file_write(), SUPERBLOCK_START_ADDR, SEEK_SET);
     fwrite(superBlock, sizeof(SuperBlock), 1, image.get_file_write());
 
     //更新inode位图
     inode_bitmap[inode_id] = 0;
-    fseek(image.get_file_write(), InodeBitmap_StartAddr + inode_id,SEEK_SET);
+    fseek(image.get_file_write(), INODEBITMAP_START_ADDR + inode_id,SEEK_SET);
     fwrite(&inode_bitmap[inode_id], sizeof(bool), 1, image.get_file_write());
     fflush(image.get_file_write());
 
@@ -1304,7 +1290,7 @@ void FileSystem::MakeFile(int addr, char *param, char *buffer) {
         Create(addr, param, buffer);	//创建文件
     }
     else{
-        cout << "权限不足" << endl;
+        cout << "Permission Dennied" << endl;
         return ;
     }
 }
@@ -1333,8 +1319,7 @@ void FileSystem::DelFile(int addr, char *param) {
         filemode = 0;
 
     if( ((cur.inode_mode >> filemode >> 1 ) & 1) ==0 ){
-        //没有写入权限
-        cout << "没有写入无权限" << endl;
+        cout << "Permission Dennied" << endl;
         return ;
     }
 
