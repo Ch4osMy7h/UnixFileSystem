@@ -36,6 +36,8 @@ private:
     char cur_dir_name[MAX_NAME_SIZE];           //当前目录名
     char cur_user_dir_name[MAX_NAME_SIZE];      //当前登陆用户目录名
 
+    void readFirst(int addr);
+
 
     bool check(char name[], char wd[]);
 
