@@ -38,13 +38,17 @@ private:
 
 
     bool check(char name[], char wd[]);
+
     void FindDir(int inode_addr, const char name[]);
+
     int INodeAlloc();
+
     int BlockAlloc();
 
     bool Create(int father_inode_addr, const char name[], char file_content[]);
 
     void Chmod(int father_inode_addr, const char name[], int mode);
+
 
     void ShowDir(int addr);
 

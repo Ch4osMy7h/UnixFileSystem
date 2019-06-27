@@ -8,6 +8,7 @@
 using namespace std;
 
 int main() {
+    system("clear");
     Image image;
     bool isFormat = false;
     image.InitImage(isFormat);
@@ -31,7 +32,6 @@ int main() {
     } else {
         cout << "Done" << endl;
     }
-
     while(!fileSystem.Login());
     while(fileSystem.is_login) {
         char str[100];

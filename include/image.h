@@ -17,9 +17,6 @@ public:
     Image();
 
     bool InitImage(bool& isFormat);
-
-
-
     const string &get_filename() const {
         return _filename;
     }
@@ -43,9 +40,6 @@ public:
     void set_file_write(FILE *_file_write) {
         Image::_file_write = _file_write;
     }
-
-
-
 
 private:
     string _filename;

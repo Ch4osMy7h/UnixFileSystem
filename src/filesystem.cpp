@@ -126,7 +126,6 @@ bool FileSystem::Format() {
 
     sprintf(buf,"root:x:%d:%d\n", nextUID++, nextGID++);	//增加条目，用户名：加密密码：用户ID：用户组ID
     Create(cur_dir_addr, "user", buf);	//创建用户信息文件
-
     sprintf(buf,"root:root\n");	//增加条目，用户名：密码
     Create(cur_dir_addr,"passwd",buf);	//创建用户密码文件
     Chmod(cur_dir_addr,"passwd", 0660);	//修改权限，禁止其它用户读取该文件
@@ -795,8 +794,6 @@ void FileSystem::ReadCommand(char *command) {
     char param_second[100];
     char params_third[100];
     char buffer[100000];	//最大100K
-    int tmp = 0;
-    int i;
     sscanf(command,"%s", param_first);
     if(strcmp(param_first, "ls")==0){
         ShowDir(cur_dir_addr);
@@ -814,23 +811,6 @@ void FileSystem::ReadCommand(char *command) {
         sscanf(command, "%s%s", param_first, param_second);
         DeleteDir(cur_dir_addr, param_second);
     }
-//    else if(strcmp(p1,"super")==0){
-//        printSuperBlock();
-//    }
-//    else if(strcmp(p1,"inode")==0){
-//        printInodeBitmap();
-//    }
-//    else if(strcmp(p1,"block")==0){
-//        sscanf(str,"%s%s",p1,p2);
-//        tmp = 0;
-//        if('0'<=p2[0] && p2[0]<='9'){
-//            for(i=0;p2[i];i++)
-//                tmp = tmp*10+p2[i]-'0';
-//            printBlockBitmap(tmp);
-//        }
-//        else
-//            printBlockBitmap();
-//    }
     else if(strcmp(param_first, "nano")==0){	//创建一个文件
         char* buffer = new char[255];
         sscanf(command, "%s%s", param_first, param_second);
@@ -845,7 +825,7 @@ void FileSystem::ReadCommand(char *command) {
         DelFile(cur_dir_addr, param_second);
     }
     else if(strcmp(param_first, "clear") == 0){
-        system("cls");
+        system("clear");
     }
     else if(strcmp(param_first, "exit") == 0){
         Quit();
@@ -1229,10 +1209,7 @@ void FileSystem::Quit() {
 }
 
 void FileSystem::MakeFile(int addr, char *param, char *buffer) {
-    if(strlen(param) >= MAX_NAME_SIZE){
-        cout << "文件名超过限制" << endl;
-        return ;
-    }
+
 
     FILE* fr = image.get_file_read();
     Dir dir_vec[16];
@@ -1271,7 +1248,7 @@ void FileSystem::MakeFile(int addr, char *param, char *buffer) {
         //输出该磁盘块中的所有目录项
         for(int j = 0; j < 16; j++){
             //当前是否有重名
-            if(strcmp(dir_vec[j].name, param)==0 ){
+            if(strcmp(dir_vec[j].name, param) ==0 ){
 
                 fseek(fr, dir_vec[j].inode_addr, SEEK_SET);
                 fread(&create_file_inode, sizeof(iNode), 1, fr);
@@ -1957,7 +1934,8 @@ void FileSystem::Help() {
     cout << "clear : Clear the terminal" << endl;
     cout << "exit : Exit the System" << endl;
     cout << "touch [filename] : Create a new empty file" << endl;
-    cout << "vi [filename] : Remove file" << endl;
+    cout << "nano [filename] : edit a file" << endl;
+    cout << "format : format the system" << endl;
 }
 
 void FileSystem::editor(int cur_dir_addr, char file_name[], char buf[])
@@ -2197,11 +2175,3 @@ void FileSystem::editor(int cur_dir_addr, char file_name[], char buf[])
 
 }
 
-
-
-
-
-
-//bool FileSystem::Parse() {
-//
-//}
